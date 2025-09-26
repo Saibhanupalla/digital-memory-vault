@@ -1,0 +1,25 @@
+services:
+
+  db:
+    container_name: postgres-digital-vault
+    image: pgvector/pgvector:pg17
+    restart: unless-stopped
+    # set shared memory limit when using docker compose
+    shm_size: 128mb
+
+    environment:
+      POSTGRES_USER: bhanu
+      POSTGRES_PASSWORD: bhanu
+      POSTGRES_DB: digital-memory-vault
+      PGDATA: /data/postgres
+    volumes:
+      - db:/data/postgres
+    ports:
+      - "5332:5432"
+    networks:
+      - db
+networks:
+  db:
+    driver: bridge
+volumes:
+  db:
