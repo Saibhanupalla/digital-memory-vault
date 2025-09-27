@@ -100,4 +100,18 @@ public class EntriesService {
                 .collect(Collectors.toList());
 
     }
+
+    public Entries updateEntryMedia(Long entryId, String mediaUrl, String mediaType) {
+        // Find the existing entry
+        Entries entry = entriesRepository.findById(entryId)
+                .orElseThrow(() -> new RuntimeException("Entry not found with id: " + entryId));
+
+        // Set the media properties
+        entry.setMediaUrl(mediaUrl);
+        entry.setMediaType(mediaType.toUpperCase());
+
+        // Save and return the updated entry
+        return entriesRepository.save(entry);
+    }
+
 }

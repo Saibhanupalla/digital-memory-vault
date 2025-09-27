@@ -6,9 +6,12 @@ import com.example.model.Entries;
 import com.example.model.Reflection;
 import com.example.model.Tag;
 import com.example.service.EntriesService;
+import com.example.service.FileStorageService;
 import com.example.service.ReflectionService;
 import com.example.service.TagService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.List;
 import java.util.Set;
@@ -20,11 +23,13 @@ public class EntriesController {
     private final EntriesService entryService;
     private final TagService tagService;
     private final ReflectionService reflectionService;
+    private final FileStorageService fileStorageService;
 
-    public EntriesController(EntriesService entryService , TagService tagService, ReflectionService reflectionService) {
+    public EntriesController(EntriesService entryService , TagService tagService, ReflectionService reflectionService, FileStorageService fileStorageService) {
         this.entryService = entryService;
         this.tagService = tagService;
         this.reflectionService = reflectionService;
+        this.fileStorageService = fileStorageService;
     }
 
     // Create entry for a specific user
@@ -92,5 +97,24 @@ public class EntriesController {
     @GetMapping("/user/{userId}/mood-history")
     public List<MoodHistoryDto> getMoodHistoryForUser(@PathVariable Integer userId) {
         return entryService.getMoodHistory(userId);
+    }
+
+    @PostMapping("/{entryId}/media")
+    public Entries uploadMedia(
+            @PathVariable Long entryId,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("mediaType") String mediaType) {
+
+        // 1. Store the file on the server
+        String fileName = fileStorageService.storeFile(file);
+
+        // 2. Create the download URL for the file
+        String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+                .path("/media/")
+                .path(fileName)
+                .toUriString();
+
+        // 3. Update the entry in the database with the media URL
+        return entryService.updateEntryMedia(entryId, fileDownloadUri, mediaType);
     }
 }

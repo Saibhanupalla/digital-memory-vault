@@ -41,6 +41,12 @@ public class Entries {
     @Column(columnDefinition = "real[]")
     private float[] embedding;
 
+    @Column(name = "media_url")
+    private String mediaUrl;
+
+    @Column(name = "media_type")
+    private String mediaType;
+
     @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @JoinTable(
             name = "entry_tags",
@@ -85,6 +91,22 @@ public class Entries {
 
     public void setEmbedding(float[] embedding) {
         this.embedding = embedding;
+    }
+
+    public String getMediaUrl() {
+        return mediaUrl;
+    }
+
+    public void setMediaUrl(String mediaUrl) {
+        this.mediaUrl = mediaUrl;
+    }
+
+    public String getMediaType() {
+        return mediaType;
+    }
+
+    public void setMediaType(String mediaType) {
+        this.mediaType = mediaType;
     }
 
     @Override

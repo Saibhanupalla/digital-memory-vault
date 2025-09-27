@@ -6,6 +6,7 @@ import com.example.repository.EntriesRepository;
 import com.example.repository.UserRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.crypto.password.PasswordEncoder; // 1. Import PasswordEncoder
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,18 +17,23 @@ public class UserService {
     private final UserRepository userRepository;
     private final EntriesRepository entriesRepository;
     private final AiService aiService;
+    private final PasswordEncoder passwordEncoder; // 2. Add the PasswordEncoder field
 
-    public UserService(UserRepository userRepository, EntriesRepository entriesRepository, AiService aiService){
+    // 3. Add PasswordEncoder to the constructor
+    public UserService(UserRepository userRepository, EntriesRepository entriesRepository, AiService aiService, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.entriesRepository = entriesRepository;
         this.aiService = aiService;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    public List<User> getAllUsers(){
+    public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
     public User saveUser(User user) {
+        // 4. Hash the user's password before saving it to the database
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
     }
 
