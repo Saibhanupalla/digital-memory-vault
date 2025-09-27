@@ -5,7 +5,6 @@ import com.example.dto.openai.EmbeddingResponse;
 import com.example.dto.openai.OpenAiRequest;
 import com.example.dto.openai.OpenAiResponse;
 import com.example.model.Entries;
-import com.pgvector.PGvector;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -120,22 +119,55 @@ public class AiService {
 
     private static final String OPENAI_EMBEDDING_URL = "https://api.openai.com/v1/embeddings";
 
-    public PGvector generateEmbedding(String content) {
+    public float[] generateEmbedding(String content) {
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(openAiApiKey);
 
         EmbeddingRequest requestPayload = new EmbeddingRequest("text-embedding-ada-002", content);
         HttpEntity<EmbeddingRequest> entity = new HttpEntity<>(requestPayload, headers);
-
         try {
             EmbeddingResponse response = restTemplate.postForObject(OPENAI_EMBEDDING_URL, entity, EmbeddingResponse.class);
             if (response != null && !response.getData().isEmpty()) {
-                return new PGvector(response.getData().get(0).getEmbedding());
+                return response.getData().get(0).getEmbedding();
             }
         } catch (Exception e) {
             System.err.println("Error calling OpenAI Embedding API: " + e.getMessage());
         }
         return null;
+    }
+
+    public String generateMonthlyDigest(String monthlyData) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(openAiApiKey);
+
+        String prompt = "You are a compassionate and insightful journal analyst. " +
+                "Based on the following data from a user's diary for a specific month, " +
+                "write a warm, encouraging, and reflective monthly digest. The digest should have:\n" +
+                "1. A title in the format '# Life Digest for [Month Name] [Year]'.\n" +
+                "2. An 'Overall Summary' section (##) providing a gentle, high-level overview of the month's events and feelings.\n" +
+                "3. A 'Mood Analysis' section (##) that reflects on the mood trends without being overly clinical.\n" +
+                "4. A 'Key Themes' section (##) that discusses the topics that appeared most frequently.\n" +
+                "Format the entire output in Markdown.\n\n" +
+                "Here is the data:\n" + monthlyData;
+
+        // Increase max tokens for a longer response
+        OpenAiRequest requestPayload = new OpenAiRequest("gpt-3.5-turbo", prompt);
+
+        HttpEntity<OpenAiRequest> entity = new HttpEntity<>(requestPayload, headers);
+
+        try {
+            OpenAiResponse response = restTemplate.postForObject(OPENAI_API_URL, entity, OpenAiResponse.class);
+            if (response != null && !response.getChoices().isEmpty()) {
+                return response.getChoices().get(0).getMessage().getContent().trim();
+            }
+        } catch (Exception e) {
+            System.err.println("Error calling OpenAI API for digest: " + e.getMessage());
+            return "Could not generate a digest at this time.";
+        }
+
+        return "Digest not available.";
     }
 }

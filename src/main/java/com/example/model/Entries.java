@@ -1,7 +1,6 @@
 package com.example.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.pgvector.PGvector;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -39,9 +38,8 @@ public class Entries {
     @Column(name = "ai_detected_mood")
     private String aiDetectedMood;
 
-    @JdbcTypeCode(SqlTypes.VECTOR) // <-- THIS IS THE CRITICAL ANNOTATION
-    @Column(columnDefinition = "vector(1536)")
-    private PGvector embedding;
+    @Column(columnDefinition = "real[]")
+    private float[] embedding;
 
     @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
     @JoinTable(
@@ -78,10 +76,16 @@ public class Entries {
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
     public String getAiDetectedMood() { return aiDetectedMood; }
     public void setAiDetectedMood(String aiDetectedMood) { this.aiDetectedMood = aiDetectedMood; }
-    public PGvector getEmbedding() { return embedding; }
-    public void setEmbedding(PGvector embedding) { this.embedding = embedding; }
     public Set<Tag> getTags() { return tags; }
     public void setTags(Set<Tag> tags) { this.tags = tags; }
+
+    public float[] getEmbedding() {
+        return embedding;
+    }
+
+    public void setEmbedding(float[] embedding) {
+        this.embedding = embedding;
+    }
 
     @Override
     public boolean equals(Object o) {

@@ -6,7 +6,6 @@ import com.example.model.User;
 import com.example.repository.EntriesRepository;
 import com.example.repository.ReflectionRepository;
 import com.example.repository.UserRepository;
-import com.pgvector.PGvector;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.model.Reflection;
@@ -40,8 +39,8 @@ public class EntriesService {
 
         String detectedMood = aiService.analyzeMood(savedEntry.getContent());
         String summary = aiService.summarizeEntry(savedEntry.getContent());
-        PGvector embedding = aiService.generateEmbedding(savedEntry.getContent());
 
+        float[] embedding = aiService.generateEmbedding(savedEntry.getContent());
         savedEntry.setAiDetectedMood(detectedMood);
         savedEntry.setEmbedding(embedding);
         entriesRepository.save(savedEntry);
