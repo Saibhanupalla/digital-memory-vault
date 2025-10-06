@@ -1,5 +1,6 @@
 package com.example.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.*;
@@ -15,7 +16,9 @@ public class Tag {
     @Column(nullable = false, unique = true)
     private String name;
 
+
     // The 'mappedBy="tags"' indicates that the Entry class is the owner of the relationship
+    @JsonIgnore
     @ManyToMany(mappedBy = "tags")
     private Set<Entries> entries = new HashSet<>();
 

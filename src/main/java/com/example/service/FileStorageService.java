@@ -4,29 +4,29 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 @Service
 public class FileStorageService {
 
-    private final Path fileStorageLocation;
+    private final S3Client s3Client;
+    private final String bucketName;
+    private final String bucketUrl;
 
-    public FileStorageService(@Value("${file.upload-dir}") String uploadDir) {
-        this.fileStorageLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
-        try {
-            Files.createDirectories(this.fileStorageLocation);
-        } catch (Exception ex) {
-            throw new RuntimeException("Could not create the directory where the uploaded files will be stored.", ex);
-        }
+    public FileStorageService(S3Client s3Client,
+                              @Value("${aws.s3.bucket-name}") String bucketName,
+                              @Value("${spring.cloud.aws.region.static}") String region) {
+        this.s3Client = s3Client;
+        this.bucketName = bucketName;
+        this.bucketUrl = String.format("https://%s.s3.%s.amazonaws.com", bucketName, region);
     }
 
     public String storeFile(MultipartFile file) {
-        // Generate a unique file name to avoid conflicts
+        // Generate a unique file name
         String originalFileName = StringUtils.cleanPath(file.getOriginalFilename());
         String fileExtension = "";
         try {
@@ -37,11 +37,18 @@ public class FileStorageService {
         String fileName = UUID.randomUUID().toString() + fileExtension;
 
         try {
-            // Copy file to the target location (Replacing existing file with the same name)
-            Path targetLocation = this.fileStorageLocation.resolve(fileName);
-            Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+            // Build the request to upload the file to S3
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(fileName)
+                    .build();
 
-            return fileName;
+            // Upload the file
+            s3Client.putObject(putObjectRequest, RequestBody.fromInputStream(file.getInputStream(), file.getSize()));
+
+            // Return the full public URL of the uploaded file
+            return bucketUrl + "/" + fileName;
+
         } catch (IOException ex) {
             throw new RuntimeException("Could not store file " + fileName + ". Please try again!", ex);
         }

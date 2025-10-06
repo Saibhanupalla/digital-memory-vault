@@ -105,16 +105,10 @@ public class EntriesController {
             @RequestParam("file") MultipartFile file,
             @RequestParam("mediaType") String mediaType) {
 
-        // 1. Store the file on the server
-        String fileName = fileStorageService.storeFile(file);
+        // 1. The service now returns the full, final S3 URL.
+        String fileUrl = fileStorageService.storeFile(file);
 
-        // 2. Create the download URL for the file
-        String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/media/")
-                .path(fileName)
-                .toUriString();
-
-        // 3. Update the entry in the database with the media URL
-        return entryService.updateEntryMedia(entryId, fileDownloadUri, mediaType);
+        // 2. We no longer build a new URL here. We just pass the S3 URL directly to be saved.
+        return entryService.updateEntryMedia(entryId, fileUrl, mediaType);
     }
 }

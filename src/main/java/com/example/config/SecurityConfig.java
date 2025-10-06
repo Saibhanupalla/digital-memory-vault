@@ -3,6 +3,7 @@ package com.example.config;
 import com.example.config.filter.JwtRequestFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -36,20 +37,20 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // 1. Disable CSRF
                 .csrf(csrf -> csrf.disable())
-                // 2. Define authorization rules
                 .authorizeHttpRequests(auth -> auth
-                        // Endpoints under /api/auth/ are public
+                        // Allow all requests to authentication endpoints
                         .requestMatchers("/api/auth/**").permitAll()
-                        // All other endpoints require authentication
+
+                        // ADD THIS LINE: Allow all OPTIONS requests for the browser's preflight check
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                        // All other requests must be authenticated
                         .anyRequest().authenticated()
                 )
-                // 3. Set session management to stateless
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                // 4. Add the JWT filter to check for tokens on each request
                 .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

@@ -7,6 +7,7 @@ import com.example.model.User;
 import com.example.repository.DigestRepository;
 import com.example.repository.EntriesRepository;
 import com.example.repository.UserRepository;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -85,5 +86,30 @@ public class DigestService {
         digest.setKeyThemes(keyThemes);
 
         return digestRepository.save(digest);
+    }
+
+    @Scheduled(cron = "0 0 5 1 * ?") // Cron expression for 5 AM on the 1st of each month
+    public void generateMonthlyDigestsForAllUsers() {
+        System.out.println("Starting monthly digest generation job...");
+
+        // Get the previous month and year
+        LocalDate lastMonth = LocalDate.now().minusMonths(1);
+        int year = lastMonth.getYear();
+        int month = lastMonth.getMonthValue();
+
+        // Find all users in the system
+        List<User> allUsers = userRepository.findAll();
+
+        // Loop through each user and generate their digest for the previous month
+        for (User user : allUsers) {
+            try {
+                System.out.println("Generating digest for user: " + user.getUsername());
+                generateDigest(user.getId(), year, month);
+            } catch (Exception e) {
+                // Log the error but continue to the next user
+                System.err.println("Failed to generate digest for user " + user.getId() + ": " + e.getMessage());
+            }
+        }
+        System.out.println("Monthly digest generation job finished.");
     }
 }
